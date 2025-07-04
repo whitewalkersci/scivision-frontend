@@ -1,0 +1,65 @@
+name: Build and Push Docker to GAR
+
+on:
+  push:
+    branches:
+      - dev
+
+env:
+  GCP_PROJECT_ID: nimble-granite-387107
+  GAR_REGION: us-central1
+  GAR_REPO: scivision
+  IMAGE_NAME: scivision-frontend
+  IMAGE_TAG: latest
+  FULL_IMAGE_NAME: ${{ env.GAR_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.GAR_REPO }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+jobs:
+  build:
+    name: 🛠 Build Docker Image
+    runs-on: self-hosted  # OR 'ubuntu-latest' if using GitHub-hosted runners
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🔐 Auth with GCP
+      run: |
+        gcloud config set project $GCP_PROJECT_ID
+        gcloud auth configure-docker $GAR_REGION-docker.pkg.dev
+
+    - name: 🏗 Build Docker Image
+      run: |
+        echo "⏱️ Build started at: $(date)"
+        docker build -t $FULL_IMAGE_NAME .
+        echo "✅ Build completed at: $(date)"
+        docker save $FULL_IMAGE_NAME | gzip > image.tar.gz
+
+    - name: ⬆ Upload Image Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: docker-image
+        path: image.tar.gz
+
+  push:
+    name: 🚀 Push to GAR
+    needs: build
+    runs-on: self-hosted  # OR 'ubuntu-latest' if using GitHub-hosted runners
+
+    steps:
+    - name: ⬇ Download Image Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: docker-image
+        path: .
+
+    - name: 🔐 Auth with GCP
+      run: |
+        gcloud config set project $GCP_PROJECT_ID
+        gcloud auth configure-docker $GAR_REGION-docker.pkg.dev
+
+    - name: 📤 Load and Push Docker Image
+      run: |
+        gunzip -c image.tar.gz | docker load
+        echo "🚀 Pushing to GAR: $FULL_IMAGE_NAME"
+        docker push $FULL_IMAGE_NAME
+        echo "✅ Push completed at: $(date)"
