@@ -1,0 +1,84 @@
+trigger:
+  branches:
+    include:
+      - dev
+
+variables:
+  GCP_PROJECT_ID: 'nimble-granite-387107'
+  GAR_REGION: 'us-central1'
+  GAR_REPO: 'scivision'
+  IMAGE_NAME: 'scivision-frontend'
+  IMAGE_TAG: 'latest'
+  FULL_IMAGE_NAME: '$(GAR_REGION)-docker.pkg.dev/$(GCP_PROJECT_ID)/$(GAR_REPO)/$(IMAGE_NAME):$(IMAGE_TAG)'
+
+stages:
+
+# -----------------------------
+- stage: Build
+  displayName: 🛠 Build Docker Image
+  jobs:
+  - job: BuildDockerImage
+    displayName: 🐳 Docker Build
+    pool:
+      vmImage: 'ubuntu-latest'  # Change to your self-hosted agent pool name if needed
+
+    steps:
+    - checkout: self
+
+    - task: Bash@3
+      displayName: 🔐 Configure GCP Docker Auth
+      inputs:
+        targetType: 'inline'
+        script: |
+          gcloud config set project $GCP_PROJECT_ID
+          gcloud auth configure-docker $GAR_REGION-docker.pkg.dev
+
+    - task: Bash@3
+      displayName: 🏗 Build Docker Image
+      inputs:
+        targetType: 'inline'
+        script: |
+          echo "⏱️ Build started at: $(date)"
+          docker build -t $(FULL_IMAGE_NAME) .
+          echo "✅ Build completed at: $(date)"
+
+          echo "📦 Saving image as artifact..."
+          docker save $(FULL_IMAGE_NAME) | gzip > image.tar.gz
+
+    - publish: image.tar.gz
+      artifact: docker-image
+
+# -----------------------------
+- stage: Push
+  displayName: 🚀 Push to GAR
+  dependsOn: Build
+  jobs:
+  - job: PushDockerImage
+    displayName: 📤 Push to Google Artifact Registry
+    pool:
+      vmImage: 'ubuntu-latest'  # Same self-hosted pool
+
+    steps:
+    - download: current
+      artifact: docker-image
+
+    - task: Bash@3
+      displayName: 🔐 Configure GCP Docker Auth
+      inputs:
+        targetType: 'inline'
+        script: |
+          gcloud config set project $GCP_PROJECT_ID
+          gcloud auth configure-docker $GAR_REGION-docker.pkg.dev
+
+    - task: Bash@3
+      displayName: 📤 Load and Push Docker Image
+      inputs:
+        targetType: 'inline'
+        script: |
+          echo "📦 Loading image..."
+          gunzip -c image.tar.gz | docker load
+
+          echo "🚀 Pushing to GAR: $(FULL_IMAGE_NAME)"
+          docker push $(FULL_IMAGE_NAME)
+
+          echo "✅ Push completed at: $(date)"

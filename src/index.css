@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "Sora";
+  src: url("../src/assets/fonts/Sora/Sora-VariableFont_wght.ttf");
+  font-weight: 100 900; /* This sets the available weight range for the variable font */
+  font-style: normal;
+}
+
+.font-sora {
+  font-family: "Sora", sans-serif;
+}
+
+html,
+body {
+  overflow: hidden;
+  height: 100%;
+}
+
+@theme {
+  --color-GlobalPrimary: #123459;
+  --color-GlobalDarkGrey: #434343;
+  --color-GlobalLightGrey: #cbd5e1;
+  --color-GlobalBg: #f0efeb;
+  --color-TextColor: #434343;
+
+  --color-TextColor2: #f0efeb;
+  --color-model-progress: #dcb90026;
+  --color-model-complete: #19b71f26;
+  --color-model-failed: #de0c0c26;
+  --color-GlobalLightBlue: #a8d2f8;
+  --font-sora: "Sora", sans-serif;
+}
+@utility border-none-input {
+  border: none;
+  outline: none;
+}
+/* 
+@utility scroll-hide::-webkit-scrollbar {
+  display: none;
+} */
+
+/* Hide scrollbar for IE, Edge and Firefox */
+@utility scroll-hide {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+@layer components {
+  .custom-fade-in {
+    transition: background-color 0.3s ease;
+  }
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Sora", sans-serif;
+}
+
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: #123459;
+  border-radius: 9999px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  height: 20px;
+  width: 20px;
+  background: #123459;
+  border-radius: 50%;
+  margin-top: -8px;
+  border: 2px solid #123459;
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: #123459;
+  border-radius: 9999px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  background: #123459;
+  border-radius: 50%;
+  border: 2px solid #123459;
+  cursor: pointer;
+}
+
+input[type="range"] {
+  accent-color: #123459; /* fallback for some browsers */
+}
+
+/* Hide scrollbar but allow scrolling */
+.scrollbar-hidden {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
